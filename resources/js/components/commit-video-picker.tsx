@@ -87,9 +87,11 @@ export function CommitVideoPicker({
                                       : 'Uploading video…'}
                             </p>
                             <p className="text-xs">
-                                {video?.status === 'processing'
-                                    ? 'Preparing your video for playback'
-                                    : 'Keep this tab open. You can keep writing.'}
+                                {error
+                                    ? 'Remove it to choose another video.'
+                                    : video?.status === 'processing'
+                                      ? 'Preparing your video for playback'
+                                      : 'Keep this tab open. You can keep writing.'}
                             </p>
                         </div>
                     )}

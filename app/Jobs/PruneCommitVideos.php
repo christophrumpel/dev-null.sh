@@ -27,7 +27,7 @@ final class PruneCommitVideos implements ShouldBeUnique, ShouldQueue
 
         CommitVideo::query()->whereNull('commit_id')
             ->where(fn (Builder $query): Builder => $query->where('created_at', '<', $cutoff)
-                ->orWhere(fn (Builder $query): Builder => $query->where('status', '!=', CommitVideoStatus::Ready)->where('created_at', '<', $uploadCutoff)))
+                ->orWhere(fn (Builder $query): Builder => $query->whereIn('status', [CommitVideoStatus::Uploading, CommitVideoStatus::Failed])->where('created_at', '<', $uploadCutoff)))
             ->eachById($delete->handle(...));
 
         // Signed PUTs may arrive after cancellation deleted the row.

@@ -40,6 +40,7 @@ it('prunes unfinished uploads after an hour but keeps ready drafts for a day', f
     $stale = CommitVideo::query()->create(['user_id' => $user->id, 'size' => 10, 'created_at' => now()->subMinutes(61)]);
     $fresh = CommitVideo::query()->create(['user_id' => $user->id, 'size' => 10, 'created_at' => now()->subMinutes(59)]);
     $ready = CommitVideo::query()->create(['user_id' => $user->id, 'size' => 10, 'status' => CommitVideoStatus::Ready, 'created_at' => now()->subHours(23)]);
+    $processing = CommitVideo::query()->create(['user_id' => $user->id, 'size' => 10, 'status' => CommitVideoStatus::Processing, 'created_at' => now()->subHours(2)]);
     Storage::put($stale->path('source'), str_repeat('x', 5000));
 
     resolve(PruneCommitVideos::class)->handle(resolve(DeleteCommitVideo::class));
@@ -48,6 +49,7 @@ it('prunes unfinished uploads after an hour but keeps ready drafts for a day', f
     Storage::assertMissing($stale->path('source'));
     $this->assertModelExists($fresh);
     $this->assertModelExists($ready);
+    $this->assertModelExists($processing);
 });
 
 it('prunes late orphaned uploads after an hour and scratch directories after 24 hours', function (): void {

@@ -186,7 +186,14 @@ export function CommitVideo({
                                 !frame.current?.requestFullscreen &&
                                 media?.webkitEnterFullscreen
                             ) {
-                                media.webkitEnterFullscreen();
+                                try {
+                                    media.webkitEnterFullscreen();
+                                } catch {
+                                    // Throws until metadata loads with preload="none".
+                                    setError(
+                                        'Play the video first, then try fullscreen again.',
+                                    );
+                                }
                                 return;
                             }
                             if (!frame.current?.requestFullscreen) {
