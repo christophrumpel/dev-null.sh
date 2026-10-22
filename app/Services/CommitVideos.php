@@ -14,7 +14,7 @@ final readonly class CommitVideos
 {
     /**
      * Only self-contained video containers are opened: playlists must never make a worker fetch URLs or local files.
-     * Originals and metadata never become playback files. Limit both dimensions and the encoder's CPU and output size.
+     * Originals and metadata never become playback files. Limit both dimensions to Full HD and cap the output size.
      *
      * @return array{width: int, height: int, duration: float}
      */
@@ -43,10 +43,10 @@ final readonly class CommitVideos
             config()->string('video.ffmpeg'), '-nostdin', '-v', 'error', '-y',
             '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm', '-i', $directory.'/source',
             '-map', '0:v:0', '-map', '0:a:0?', '-map_metadata', '-1', '-map_metadata:s', '-1', '-map_chapters', '-1',
-            '-vf', "scale=w='min(1280,iw)':h='min(1280,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1",
+            '-vf', "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1",
             '-r', '30', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p',
-            '-maxrate', '4M', '-bufsize', '8M', '-c:a', 'aac', '-b:a', '128k', '-ac', '2',
-            '-t', '60', '-fs', '40000000', '-movflags', '+faststart', $directory.'/video.mp4',
+            '-maxrate', '8M', '-bufsize', '16M', '-c:a', 'aac', '-b:a', '128k', '-ac', '2',
+            '-t', '60', '-fs', '70000000', '-movflags', '+faststart', $directory.'/video.mp4',
         ]);
 
         throw_unless($result->successful(), RuntimeException::class, 'Video encoding failed.');
