@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('commit_videos', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->index()->constrained()->cascadeOnDelete();
             $table->foreignUuid('commit_id')->nullable()->unique()->constrained()->cascadeOnDelete();
             $table->string('status')->default(CommitVideoStatus::Uploading->value);
             $table->unsignedInteger('size');

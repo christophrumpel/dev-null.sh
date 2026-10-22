@@ -43,7 +43,7 @@ final readonly class CommitVideos
             config()->string('video.ffmpeg'), '-nostdin', '-v', 'error', '-y',
             '-protocol_whitelist', 'file,pipe', '-format_whitelist', 'mov,matroska,webm', '-i', $directory.'/source',
             '-map', '0:v:0', '-map', '0:a:0?', '-map_metadata', '-1', '-map_metadata:s', '-1', '-map_chapters', '-1',
-            '-vf', "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1",
+            '-vf', "scale=w='min(if(gte(iw,ih),1920,1080),iw)':h='min(if(gte(iw,ih),1080,1920),ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1",
             '-r', '30', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p',
             '-maxrate', '8M', '-bufsize', '16M', '-c:a', 'aac', '-b:a', '128k', '-ac', '2',
             '-t', '60', '-fs', '70000000', '-movflags', '+faststart', $directory.'/video.mp4',

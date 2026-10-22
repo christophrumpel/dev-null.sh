@@ -35,7 +35,8 @@ final class CreateCommitVideoProcessingRequest extends FormRequest
             $video = $this->route('commitVideo');
             assert($video instanceof CommitVideo);
 
-            if ($video->status === CommitVideoStatus::Uploading && (! Storage::exists($video->path('source')) || Storage::size($video->path('source')) !== $video->size)) {
+            // A wrong size still goes to the job, which rejects it and deletes the stored bytes right away.
+            if ($video->status === CommitVideoStatus::Uploading && ! Storage::exists($video->path('source'))) {
                 $validator->errors()->add('video', 'The upload is incomplete. Please choose the video again.');
             }
         }];

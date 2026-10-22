@@ -11,6 +11,7 @@ use App\Jobs\ProcessCommitVideo;
 use App\Models\Commit;
 use App\Models\CommitVideo;
 use App\Models\User;
+use App\Services\CommitVideos;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -39,6 +40,18 @@ it('stages a private upload and dispatches processing once only after every byte
     $this->deleteJson(route('commit-video.destroy', $video))->assertNoContent();
     Storage::assertMissing($video->path('source'));
     expect(CommitVideo::query()->count())->toBe(0);
+});
+
+it('sends an upload with the wrong size to processing, which deletes it at once', function (): void {
+    $user = User::factory()->create();
+    $video = CommitVideo::query()->create(['user_id' => $user->id, 'size' => 9]);
+    Storage::put($video->path('source'), str_repeat('x', 5000));
+
+    $this->actingAs($user)->postJson(route('commit-video-processing.store', $video))->assertOk();
+    Queue::pushed(ProcessCommitVideo::class)->sole()->handle(resolve(CommitVideos::class));
+
+    expect($video->refresh()->status)->toBe(CommitVideoStatus::Failed);
+    Storage::assertMissing($video->path('source'));
 });
 
 it('enforces upload limits and ownership', function (): void {

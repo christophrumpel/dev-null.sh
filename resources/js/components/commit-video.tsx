@@ -176,6 +176,19 @@ export function CommitVideo({
                         aria-label="Fullscreen video"
                         className="col-start-5 row-start-2"
                         onClick={() => {
+                            // iPhone Safari only supports fullscreen on the video element itself.
+                            const media = player.current as
+                                | (HTMLVideoElement & {
+                                      webkitEnterFullscreen?: () => void;
+                                  })
+                                | null;
+                            if (
+                                !frame.current?.requestFullscreen &&
+                                media?.webkitEnterFullscreen
+                            ) {
+                                media.webkitEnterFullscreen();
+                                return;
+                            }
                             if (!frame.current?.requestFullscreen) {
                                 setError(
                                     'Fullscreen is unavailable in this browser.',
