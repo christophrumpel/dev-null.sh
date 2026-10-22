@@ -58,6 +58,9 @@ it('prunes late orphaned uploads after an hour and scratch directories after 24 
     Storage::put('video-uploads/recent', 'new PUT');
     touch(Storage::path('video-uploads/cancelled'), now()->subMinutes(61)->getTimestamp());
     touch(Storage::path('video-uploads/recent'), now()->subMinutes(59)->getTimestamp());
+    $queued = CommitVideo::query()->create(['user_id' => User::factory()->create()->id, 'size' => 7, 'status' => CommitVideoStatus::Processing]);
+    Storage::put($queued->path('source'), 'waiting');
+    touch(Storage::path($queued->path('source')), now()->subHours(2)->getTimestamp());
     $scratch = storage_path('app/video-processing/'.Str::uuid());
     $recent = storage_path('app/video-processing/'.Str::uuid());
     File::ensureDirectoryExists($scratch);
@@ -70,6 +73,7 @@ it('prunes late orphaned uploads after an hour and scratch directories after 24 
 
         Storage::assertMissing('video-uploads/cancelled');
         Storage::assertExists('video-uploads/recent');
+        Storage::assertExists($queued->path('source'));
         expect(File::isDirectory($scratch))->toBeFalse()
             ->and(File::isDirectory($recent))->toBeTrue();
     } finally {

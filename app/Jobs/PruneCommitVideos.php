@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use League\Flysystem\StorageAttributes;
 
 final class PruneCommitVideos implements ShouldBeUnique, ShouldQueue
@@ -30,12 +31,13 @@ final class PruneCommitVideos implements ShouldBeUnique, ShouldQueue
                 ->orWhere(fn (Builder $query): Builder => $query->whereIn('status', [CommitVideoStatus::Uploading, CommitVideoStatus::Failed])->where('created_at', '<', $uploadCutoff)))
             ->eachById($delete->handle(...));
 
-        // Signed PUTs may arrive after cancellation deleted the row.
-        foreach (Storage::disk()->listContents('video-uploads')->filter(fn (StorageAttributes $entry): bool => $entry->isFile()) as $entry) {
-            if (Storage::lastModified($entry->path()) < $uploadCutoff->getTimestamp()) {
-                Storage::delete($entry->path());
-            }
-        }
+        // Signed PUTs may arrive after cancellation deleted the row. Files whose row still exists wait for that row's own cleanup.
+        $orphans = collect(Storage::disk()->listContents('video-uploads')->toArray())
+            ->filter(fn (StorageAttributes $entry): bool => $entry->isFile() && Storage::lastModified($entry->path()) < $uploadCutoff->getTimestamp())
+            ->map(fn (StorageAttributes $entry): string => $entry->path());
+        $kept = CommitVideo::query()->whereKey($orphans->map(fn (string $path): string => basename($path))->filter(fn (string $id): bool => Str::isUuid($id))->values())->pluck('id');
+
+        Storage::delete($orphans->reject(fn (string $path): bool => $kept->contains(basename($path)))->values()->all());
 
         $scratch = storage_path('app/video-processing');
 
