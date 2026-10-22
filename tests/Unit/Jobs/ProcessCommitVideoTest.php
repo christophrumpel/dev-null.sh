@@ -77,7 +77,7 @@ it('rejects videos over the duration limit rather than publishing a clipped uplo
 it('retains the source for retry but never exposes encoder errors or partial output', function (): void {
     $video = CommitVideo::query()->create(['user_id' => User::factory()->create()->id, 'size' => 4, 'status' => CommitVideoStatus::Processing]);
     Storage::put($video->path('source'), 'data');
-    Process::fake(fn (PendingProcess $process): ProcessResult => is_array($process->command) && $process->command[0] === 'ffprobe'
+    Process::fake(fn (PendingProcess $process): ProcessResult => is_array($process->command) && $process->command[0] === config()->string('video.ffprobe')
         ? Process::result(output: json_encode(['streams' => [['codec_type' => 'video', 'width' => 96, 'height' => 64]], 'format' => ['duration' => 1]], JSON_THROW_ON_ERROR))
         : Process::result(errorOutput: 'private metadata and decoder details', exitCode: 1));
     $job = new ProcessCommitVideo($video->id);
@@ -97,7 +97,7 @@ it('does not publish files when the upload is cancelled during encoding', functi
         $command = $process->command;
         assert(is_array($command));
 
-        if ($command[0] === 'ffprobe') {
+        if ($command[0] === config()->string('video.ffprobe')) {
             return Process::result(output: json_encode(['streams' => [['codec_type' => 'video', 'width' => 96, 'height' => 64]], 'format' => ['duration' => 1]], JSON_THROW_ON_ERROR));
         }
 
