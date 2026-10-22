@@ -100,7 +100,6 @@ final readonly class CreateCommit
 
             if ($commit->status === CommitStatus::Approved
                 && $user->github_id !== CreateTomFriendship::GITHUB_ID
-                && filled(config('ai.providers.opencode.key')) && filled(config('ai.providers.openai.key'))
             ) {
                 $tom = $this->tomQuery->get();
 
@@ -113,11 +112,11 @@ final readonly class CreateCommit
                 dispatch(new CheckUserLevel($user))->afterCommit();
             }
 
-            if ($video === null && $commit->status === CommitStatus::Pending && ! $hasGoodReputation && filled(config('services.openai.key'))) {
+            if ($video === null && $commit->status === CommitStatus::Pending && ! $hasGoodReputation) {
                 dispatch(new ModerateCommit($commit))->afterCommit();
             }
 
-            if ($commit->body !== '' && filled(config('services.openai.key'))) {
+            if ($commit->body !== '') {
                 dispatch(new EmbedCommit($commit))->afterCommit();
             }
 

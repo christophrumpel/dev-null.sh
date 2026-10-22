@@ -68,7 +68,7 @@ it('enforces upload limits and ownership', function (): void {
 });
 
 it('requires manual approval even for an admin and never lets AI approve a video', function (): void {
-    config(['app.admins' => ['admin'], 'services.openai.key' => 'test']);
+    config(['app.admins' => ['admin']]);
     $user = User::factory()->create(['username' => 'admin']);
     $video = CommitVideo::query()->create(['user_id' => $user->id, 'size' => 1, 'status' => CommitVideoStatus::Ready]);
     $this->actingAs($user)->post(route('commit.store'), ['video_id' => $video->id, 'video_description' => 'A new feature.'])->assertRedirect();
