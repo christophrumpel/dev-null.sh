@@ -6,7 +6,7 @@ import {
     Volume2,
     VolumeX,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { CommitVideo as VideoData } from '@/types';
@@ -26,6 +26,8 @@ export function CommitVideo({
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(video.duration ?? 0);
     const [error, setError] = useState<string | null>(null);
+    const [showDescription, setShowDescription] = useState(false);
+    const descriptionId = useId();
 
     const togglePlayback = async () => {
         const media = player.current;
@@ -104,6 +106,22 @@ export function CommitVideo({
                         className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                         onClick={() => void togglePlayback()}
                     />
+                    {video.description && (
+                        <button
+                            type="button"
+                            onClick={() => setShowDescription(!showDescription)}
+                            aria-expanded={showDescription}
+                            aria-controls={descriptionId}
+                            aria-label={
+                                showDescription
+                                    ? 'Hide video description'
+                                    : 'Show video description'
+                            }
+                            className="absolute top-2 left-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-bold tracking-wide text-white ring-1 ring-white/30 transition hover:bg-black"
+                        >
+                            ALT
+                        </button>
+                    )}
                 </div>
                 <div
                     role="group"
@@ -223,8 +241,11 @@ export function CommitVideo({
                     {error}
                 </p>
             )}
-            {video.description && (
-                <p className="px-3 py-2 text-sm whitespace-pre-wrap text-muted-foreground">
+            {video.description && showDescription && (
+                <p
+                    id={descriptionId}
+                    className="px-3 py-2 text-sm whitespace-pre-wrap text-muted-foreground"
+                >
                     {video.description}
                 </p>
             )}

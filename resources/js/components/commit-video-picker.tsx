@@ -1,9 +1,10 @@
 import { Check, LoaderCircle, Video, X } from 'lucide-react';
-import { useRef } from 'react';
+import { useId, useRef, useState } from 'react';
 import { ActionTooltip } from '@/components/action-tooltip';
 import { CommitVideo } from '@/components/commit-video';
 import { Button } from '@/components/ui/button';
 import type { useCommitVideo } from '@/hooks/use-commit-video';
+import { cn } from '@/lib/utils';
 
 export function VideoPickerButton({
     onPick,
@@ -54,6 +55,9 @@ export function CommitVideoPicker({
     processing: boolean;
 }) {
     const { file, video, ready, error, progress } = attachment;
+    const id = useId();
+    const [describing, setDescribing] = useState(false);
+    const described = attachment.description.trim() !== '';
     return (
         <>
             {file && (
@@ -79,12 +83,17 @@ export function CommitVideoPicker({
                             ) : (
                                 <LoaderCircle className="size-7 motion-safe:animate-spin" />
                             )}
-                            <p role="status" className="text-sm font-medium">
-                                {error
-                                    ? 'Video could not be prepared'
-                                    : video?.status === 'processing'
-                                      ? 'Preparing video…'
-                                      : 'Uploading video…'}
+                            <p
+                                role={error ? 'alert' : 'status'}
+                                className={cn(
+                                    'px-4 text-center text-sm font-medium',
+                                    error && 'text-destructive',
+                                )}
+                            >
+                                {error ??
+                                    (video?.status === 'processing'
+                                        ? 'Preparing video…'
+                                        : 'Uploading video…')}
                             </p>
                             <p className="text-xs">
                                 {error
@@ -104,6 +113,28 @@ export function CommitVideoPicker({
                                 {file.name}
                             </p>
                             {ready && <Check className="size-4" />}
+                            {!error && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDescribing(!describing)}
+                                    disabled={processing}
+                                    aria-label={
+                                        described
+                                            ? 'Edit video description'
+                                            : 'Add video description'
+                                    }
+                                    aria-expanded={describing}
+                                    aria-controls={`${id}-description`}
+                                    className={cn(
+                                        'rounded px-1 text-[11px] leading-4 font-bold tracking-wide transition',
+                                        described
+                                            ? 'bg-foreground text-background'
+                                            : 'bg-muted text-foreground hover:bg-accent',
+                                    )}
+                                >
+                                    {described ? 'ALT' : '+ALT'}
+                                </button>
+                            )}
                             <Button
                                 type="button"
                                 variant="ghost"
@@ -115,36 +146,72 @@ export function CommitVideoPicker({
                                 <X className="size-4" />
                             </Button>
                         </div>
-                        <progress
-                            className="h-1 w-full accent-primary"
-                            aria-label="Video upload"
-                            max={100}
-                            value={progress}
-                        />
-                        <p
-                            role="status"
-                            className="min-h-8 text-xs text-muted-foreground"
-                        >
-                            {error ??
-                                (ready
-                                    ? 'Ready to commit. Your video is not public yet.'
-                                    : 'Commit becomes available when your video is ready.')}
-                        </p>
-                        <label className="block text-xs text-muted-foreground">
-                            Video description (optional)
-                            <input
-                                value={attachment.description}
-                                disabled={processing}
-                                maxLength={1000}
-                                onChange={(event) =>
-                                    attachment.setDescription(
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder="What happens in this video?"
-                                className="mt-1 w-full rounded-md border bg-transparent px-2.5 py-2 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
-                            />
-                        </label>
+                        {!error && (
+                            <>
+                                <progress
+                                    className="h-1 w-full accent-primary"
+                                    aria-label="Video upload"
+                                    max={100}
+                                    value={progress}
+                                />
+                                <p
+                                    role="status"
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    {ready
+                                        ? 'Ready to commit. Your video is not public yet.'
+                                        : 'Commit becomes available when your video is ready.'}
+                                </p>
+                            </>
+                        )}
+                        {describing && !error && (
+                            <div
+                                id={`${id}-description`}
+                                className="rounded-md border bg-background p-2"
+                            >
+                                <label
+                                    htmlFor={`${id}-description-input`}
+                                    className="text-xs font-medium text-muted-foreground"
+                                >
+                                    Description of the video
+                                </label>
+                                <textarea
+                                    id={`${id}-description-input`}
+                                    autoFocus
+                                    rows={2}
+                                    value={attachment.description}
+                                    disabled={processing}
+                                    maxLength={1000}
+                                    onChange={(event) =>
+                                        attachment.setDescription(
+                                            event.target.value,
+                                        )
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Escape') {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            setDescribing(false);
+                                        }
+                                    }}
+                                    placeholder="Describe the video for people who can't see it"
+                                    className="mt-1 block field-sizing-content max-h-40 min-h-12 w-full resize-none bg-transparent text-base leading-relaxed outline-none placeholder:text-muted-foreground md:text-sm"
+                                />
+                                <div className="mt-1 flex items-center justify-end gap-3">
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                        {attachment.description.length}/1000
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => setDescribing(false)}
+                                    >
+                                        Done
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
             )}
