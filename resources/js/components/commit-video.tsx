@@ -22,6 +22,7 @@ export function CommitVideo({
     const frame = useRef<HTMLDivElement>(null);
     const [playing, setPlaying] = useState(false);
     const [ended, setEnded] = useState(false);
+    const [started, setStarted] = useState(false);
     const [muted, setMuted] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(video.duration ?? 0);
@@ -80,6 +81,7 @@ export function CommitVideo({
                         }}
                         onPlay={() => {
                             setPlaying(true);
+                            setStarted(true);
                             setEnded(false);
                         }}
                         onPause={() => setPlaying(false)}
@@ -106,6 +108,23 @@ export function CommitVideo({
                         className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                         onClick={() => void togglePlayback()}
                     />
+                    {!playing && (
+                        <span
+                            aria-hidden
+                            className="pointer-events-none absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white ring-2 ring-white/80"
+                        >
+                            {ended ? (
+                                <RotateCcw className="size-6" />
+                            ) : (
+                                <Play className="ml-0.5 size-6 fill-current" />
+                            )}
+                        </span>
+                    )}
+                    {!started && duration > 0 && (
+                        <span className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white tabular-nums">
+                            {time(duration)}
+                        </span>
+                    )}
                     {video.description && (
                         <button
                             type="button"
@@ -123,118 +142,121 @@ export function CommitVideo({
                         </button>
                     )}
                 </div>
-                <div
-                    role="group"
-                    aria-label="Video controls"
-                    className="absolute inset-x-0 bottom-0 grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-x-1 bg-linear-to-t from-black/65 via-black/50 via-65% to-transparent px-3 pt-2 pb-2 text-white transition-opacity group-hover/player:pointer-events-auto group-hover/player:opacity-100 group-has-[:focus-visible]/player:pointer-events-auto group-has-[:focus-visible]/player:opacity-100 motion-reduce:transition-none [&_button:hover]:bg-white/15 [&_button:hover]:text-white [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0"
-                >
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={playLabel}
-                        className="col-start-1 row-start-2"
-                        onClick={() => void togglePlayback()}
+                {started && (
+                    <div
+                        role="group"
+                        aria-label="Video controls"
+                        className="absolute inset-x-0 bottom-0 grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-x-1 bg-linear-to-t from-black/65 via-black/50 via-65% to-transparent px-3 pt-2 pb-2 text-white transition-opacity group-hover/player:pointer-events-auto group-hover/player:opacity-100 group-has-[:focus-visible]/player:pointer-events-auto group-has-[:focus-visible]/player:opacity-100 motion-reduce:transition-none [&_button:hover]:bg-white/15 [&_button:hover]:text-white [@media(hover:hover)]:pointer-events-none [@media(hover:hover)]:opacity-0"
                     >
-                        {playing ? (
-                            <Pause className="size-4" />
-                        ) : ended ? (
-                            <RotateCcw className="size-4" />
-                        ) : (
-                            <Play className="size-4" />
-                        )}
-                    </Button>
-                    <input
-                        type="range"
-                        aria-label="Video position"
-                        aria-valuetext={`${time(position)} of ${time(duration)}`}
-                        min={0}
-                        max={duration}
-                        step={0.1}
-                        value={position}
-                        disabled={duration <= 0}
-                        className="col-span-full row-start-1 h-4 w-full min-w-0 cursor-pointer appearance-none bg-transparent bg-center bg-no-repeat [&::-moz-range-thumb]:size-2 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white [&::-moz-range-track]:bg-transparent [&::-webkit-slider-thumb]:size-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-                        style={{
-                            backgroundImage: `linear-gradient(to right, white ${(position / (duration || 1)) * 100}%, rgb(255 255 255 / 45%) ${(position / (duration || 1)) * 100}%)`,
-                            backgroundSize: '100% 2px',
-                        }}
-                        onChange={(event) => {
-                            if (player.current) {
-                                player.current.currentTime = Number(
-                                    event.target.value,
-                                );
-                                setPosition(Number(event.target.value));
-                            }
-                        }}
-                    />
-                    <span className="col-start-3 row-start-2 text-xs whitespace-nowrap tabular-nums">
-                        {time(position)} / {time(duration)}
-                    </span>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={muted ? 'Unmute video' : 'Mute video'}
-                        className="col-start-4 row-start-2"
-                        onClick={() => {
-                            if (player.current)
-                                player.current.muted = !player.current.muted;
-                        }}
-                    >
-                        {muted ? (
-                            <VolumeX className="size-4" />
-                        ) : (
-                            <Volume2 className="size-4" />
-                        )}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Fullscreen video"
-                        className="col-start-5 row-start-2"
-                        onClick={() => {
-                            // iPhone Safari only supports fullscreen on the video element itself.
-                            const media = player.current as
-                                | (HTMLVideoElement & {
-                                      webkitEnterFullscreen?: () => void;
-                                  })
-                                | null;
-                            if (
-                                !frame.current?.requestFullscreen &&
-                                media?.webkitEnterFullscreen
-                            ) {
-                                try {
-                                    media.webkitEnterFullscreen();
-                                } catch {
-                                    // Throws until metadata loads with preload="none".
-                                    setError(
-                                        'Play the video first, then try fullscreen again.',
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={playLabel}
+                            className="col-start-1 row-start-2"
+                            onClick={() => void togglePlayback()}
+                        >
+                            {playing ? (
+                                <Pause className="size-4" />
+                            ) : ended ? (
+                                <RotateCcw className="size-4" />
+                            ) : (
+                                <Play className="size-4" />
+                            )}
+                        </Button>
+                        <input
+                            type="range"
+                            aria-label="Video position"
+                            aria-valuetext={`${time(position)} of ${time(duration)}`}
+                            min={0}
+                            max={duration}
+                            step={0.1}
+                            value={position}
+                            disabled={duration <= 0}
+                            className="col-span-full row-start-1 h-4 w-full min-w-0 cursor-pointer appearance-none bg-transparent bg-center bg-no-repeat [&::-moz-range-thumb]:size-2 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white [&::-moz-range-track]:bg-transparent [&::-webkit-slider-thumb]:size-2 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                            style={{
+                                backgroundImage: `linear-gradient(to right, white ${(position / (duration || 1)) * 100}%, rgb(255 255 255 / 45%) ${(position / (duration || 1)) * 100}%)`,
+                                backgroundSize: '100% 2px',
+                            }}
+                            onChange={(event) => {
+                                if (player.current) {
+                                    player.current.currentTime = Number(
+                                        event.target.value,
                                     );
+                                    setPosition(Number(event.target.value));
                                 }
-                                return;
-                            }
-                            if (!frame.current?.requestFullscreen) {
-                                setError(
-                                    'Fullscreen is unavailable in this browser.',
-                                );
-                                return;
-                            }
-                            if (document.fullscreenElement)
-                                void document.exitFullscreen();
-                            else
-                                void frame.current
-                                    ?.requestFullscreen()
-                                    .catch(() =>
+                            }}
+                        />
+                        <span className="col-start-3 row-start-2 text-xs whitespace-nowrap tabular-nums">
+                            {time(position)} / {time(duration)}
+                        </span>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={muted ? 'Unmute video' : 'Mute video'}
+                            className="col-start-4 row-start-2"
+                            onClick={() => {
+                                if (player.current)
+                                    player.current.muted =
+                                        !player.current.muted;
+                            }}
+                        >
+                            {muted ? (
+                                <VolumeX className="size-4" />
+                            ) : (
+                                <Volume2 className="size-4" />
+                            )}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Fullscreen video"
+                            className="col-start-5 row-start-2"
+                            onClick={() => {
+                                // iPhone Safari only supports fullscreen on the video element itself.
+                                const media = player.current as
+                                    | (HTMLVideoElement & {
+                                          webkitEnterFullscreen?: () => void;
+                                      })
+                                    | null;
+                                if (
+                                    !frame.current?.requestFullscreen &&
+                                    media?.webkitEnterFullscreen
+                                ) {
+                                    try {
+                                        media.webkitEnterFullscreen();
+                                    } catch {
+                                        // Throws until metadata loads with preload="none".
                                         setError(
-                                            'Fullscreen is unavailable in this browser.',
-                                        ),
+                                            'Play the video first, then try fullscreen again.',
+                                        );
+                                    }
+                                    return;
+                                }
+                                if (!frame.current?.requestFullscreen) {
+                                    setError(
+                                        'Fullscreen is unavailable in this browser.',
                                     );
-                        }}
-                    >
-                        <Maximize className="size-4" />
-                    </Button>
-                </div>
+                                    return;
+                                }
+                                if (document.fullscreenElement)
+                                    void document.exitFullscreen();
+                                else
+                                    void frame.current
+                                        ?.requestFullscreen()
+                                        .catch(() =>
+                                            setError(
+                                                'Fullscreen is unavailable in this browser.',
+                                            ),
+                                        );
+                            }}
+                        >
+                            <Maximize className="size-4" />
+                        </Button>
+                    </div>
+                )}
             </div>
             {error && (
                 <p role="alert" className="px-3 py-2 text-sm text-destructive">
