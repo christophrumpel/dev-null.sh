@@ -68,7 +68,7 @@ export function useCommitVideo() {
             selected.size === 0 ||
             selected.size > 100 * 1024 * 1024
         ) {
-            setError('Choose one video up to 100 MiB and 60 seconds.');
+            setError('Choose one video up to 60 seconds and 100 MB.');
             return;
         }
         setFile(selected);

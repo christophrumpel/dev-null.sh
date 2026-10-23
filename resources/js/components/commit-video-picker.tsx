@@ -30,7 +30,7 @@ export function VideoPickerButton({
                     if (selected) void onPick(selected);
                 }}
             />
-            <ActionTooltip label="Attach a video up to 60 seconds">
+            <ActionTooltip label="Attach a video up to 60 seconds / 100 MB">
                 <Button
                     type="button"
                     variant="ghost"

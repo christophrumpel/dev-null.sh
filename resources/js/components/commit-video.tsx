@@ -105,13 +105,13 @@ export function CommitVideo({
                     <button
                         type="button"
                         aria-label={playLabel}
-                        className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                        className="peer absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                         onClick={() => void togglePlayback()}
                     />
                     {!playing && (
                         <span
                             aria-hidden
-                            className="pointer-events-none absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white ring-2 ring-white/80"
+                            className="pointer-events-none absolute top-1/2 left-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/80 bg-black/60 text-white transition duration-150 peer-hover:scale-110 peer-hover:border-dashed peer-hover:border-white peer-hover:bg-black/80 peer-focus-visible:scale-110 peer-focus-visible:border-dashed peer-focus-visible:border-white motion-reduce:transition-none motion-reduce:peer-hover:scale-100 motion-reduce:peer-focus-visible:scale-100"
                         >
                             {ended ? (
                                 <RotateCcw className="size-6" />
